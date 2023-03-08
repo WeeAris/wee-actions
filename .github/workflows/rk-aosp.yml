@@ -6,7 +6,7 @@ on:
     inputs:
       IS_RELEASE:
         required: true
-        default: 'true'
+        default: true
         type: boolean
       DEVICE_CODE:
         required: true
@@ -14,7 +14,7 @@ on:
         type: string
       USE_KERNELSU:
         required: true
-        default: 'true'
+        default: true
         type: boolean
       CLANG_ARGS:
         required: false
