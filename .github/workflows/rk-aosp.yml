@@ -27,38 +27,38 @@ on:
   
 jobs:
   build:
-    name: Build for ${{ github.event.inputs.DEVICE_CODE }}
+    name: Build for ${{ inputs.DEVICE_CODE }}
     runs-on: ubuntu-latest
     steps:
     - name: Setup Configuration
       run: |
-        if [ ${{ github.event.inputs.IS_RELEASE }} = true ] ; then
-          echo "SOURCE_REPO='WeeAris/Realking_su_xiaomi_sm8250'" >> $GITHUB_ENV
-          echo "BRANCH_NAME=${{ github.event.inputs.DEVICE_CODE }}" >> $GITHUB_ENV
-          if [ ${{ github.event.inputs.DEVICE_CODE }} = alioth ] ; then
+        if [ ${{ inputs.IS_RELEASE }} = true ] ; then
+          echo "SOURCE_REPO=WeeAris/Realking_su_xiaomi_sm8250" >> $GITHUB_ENV
+          echo "BRANCH_NAME=${{ inputs.DEVICE_CODE }}" >> $GITHUB_ENV
+          if [ ${{ inputs.DEVICE_CODE }} = alioth ] ; then
             echo "DEVICE_NAME=Alioth" >> $GITHUB_ENV
-            echo "DEF_CONFIG='vendor/alioth_defconfig'" >> $GITHUB_ENV
-          elif [ ${{ github.event.inputs.DEVICE_CODE }} = munch ] ; then
+            echo "DEF_CONFIG=vendor/alioth_defconfig" >> $GITHUB_ENV
+          elif [ ${{ inputs.DEVICE_CODE }} = munch ] ; then
             echo "DEVICE_NAME=Munch" >> $GITHUB_ENV
-            echo "DEF_CONFIG='vendor/munch_defconfig'" >> $GITHUB_ENV
-          elif [ ${{ github.event.inputs.DEVICE_CODE }} = apollo ] ; then
+            echo "DEF_CONFIG=vendor/munch_defconfig" >> $GITHUB_ENV
+          elif [ ${{ inputs.DEVICE_CODE }} = apollo ] ; then
             echo "DEVICE_NAME=Apollo" >> $GITHUB_ENV
-            echo "DEF_CONFIG='vendor/apollo_defconfig'" >> $GITHUB_ENV
+            echo "DEF_CONFIG=vendor/apollo_defconfig" >> $GITHUB_ENV
           fi
         else
-          echo "SOURCE_REPO='Rohail33/Realking_xiaomi_sm8250'" >> $GITHUB_ENV
-          if [ ${{ github.event.inputs.DEVICE_CODE }} = alioth ] ; then
+          echo "SOURCE_REPO=Rohail33/Realking_xiaomi_sm8250" >> $GITHUB_ENV
+          if [ ${{ inputs.DEVICE_CODE }} = alioth ] ; then
             echo "BRANCH_NAME=T" >> $GITHUB_ENV
             echo "DEVICE_NAME=Alioth" >> $GITHUB_ENV
-            echo "DEF_CONFIG='vendor/alioth_defconfig'" >> $GITHUB_ENV
-          elif [ ${{ github.event.inputs.DEVICE_CODE }} = munch ] ; then
-            echo "BRANCH_NAME=${{ github.event.inputs.DEVICE_CODE }}" >> $GITHUB_ENV
+            echo "DEF_CONFIG=vendor/alioth_defconfig" >> $GITHUB_ENV
+          elif [ ${{ inputs.DEVICE_CODE }} = munch ] ; then
+            echo "BRANCH_NAME=${{ inputs.DEVICE_CODE }}" >> $GITHUB_ENV
             echo "DEVICE_NAME=Munch" >> $GITHUB_ENV
-            echo "DEF_CONFIG='vendor/munch_defconfig'" >> $GITHUB_ENV
-          elif [ ${{ github.event.inputs.DEVICE_CODE }} = apollo ] ; then
-            echo "BRANCH_NAME=${{ github.event.inputs.DEVICE_CODE }}" >> $GITHUB_ENV
+            echo "DEF_CONFIG=vendor/munch_defconfig" >> $GITHUB_ENV
+          elif [ ${{ inputs.DEVICE_CODE }} = apollo ] ; then
+            echo "BRANCH_NAME=${{ inputs.DEVICE_CODE }}" >> $GITHUB_ENV
             echo "DEVICE_NAME=Apollo" >> $GITHUB_ENV
-            echo "DEF_CONFIG='vendor/apollo_defconfig'" >> $GITHUB_ENV
+            echo "DEF_CONFIG=vendor/apollo_defconfig" >> $GITHUB_ENV
           fi
         fi
         
@@ -85,7 +85,7 @@ jobs:
         echo "CLANG_DIR=$CLANG_DIR" >> $GITHUB_ENV
       
     - name: Setup KernelSU
-      if: github.event.inputs.USE_KERNELSU == 'true'
+      if: ${{ inputs.USE_KERNELSU }} == true
       run: |
         cd android-kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
@@ -113,14 +113,14 @@ jobs:
 
         make CC=clang O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- NM=llvm-nm LLVM=1 LLVM_IAS=1 ${{ env.DEF_CONFIG }}
         
-        if ${{ github.event.inputs.USE_KERNELSU }} ; then
+        if ${{ inputs.USE_KERNELSU }} ; then
           sed -i "/RealKing/{s/-/-${KSU_VERSION}-/}" out/.config
           sed -i "/RealKing/{s/RealKing/RK-KSU/}" out/.config
           KERNEL_NAME=`grep "RK-KSU" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
         else
           KERNEL_NAME=`grep "RealKing" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
         fi
-        if [ ${{ github.event.inputs.IS_RELEASE }} = true ] ; then
+        if [ ${{ inputs.IS_RELEASE }} = true ] ; then
           echo "ZIMAGE_NAME=${KERNEL_NAME}-${{ env.DEVICE_NAME }}-AOSP-Release" >> $GITHUB_ENV
         else
           echo "ZIMAGE_NAME=${KERNEL_NAME}-${{ env.DEVICE_NAME }}-AOSP-Snapshot" >> $GITHUB_ENV
