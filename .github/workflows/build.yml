@@ -12,17 +12,17 @@ jobs:
     uses: ./.github/workflows/rk-aosp.yml
     with:
       IS_RELEASE: false
-      DEVICE_CODE: munch
+      DEVICE_CODE: 'munch'
       USE_KERNELSU: true
   build-alioth-kernel:
     uses: ./.github/workflows/rk-aosp.yml
     with:
       IS_RELEASE: false
-      DEVICE_CODE: alioth
+      DEVICE_CODE: 'alioth'
       USE_KERNELSU: true
   build-apollo-kernel:
     uses: ./.github/workflows/rk-aosp.yml
     with:
       IS_RELEASE: false
-      DEVICE_CODE: apollo
+      DEVICE_CODE: 'apollo'
       USE_KERNELSU: true
