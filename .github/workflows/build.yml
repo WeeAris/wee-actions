@@ -1,0 +1,28 @@
+name: Build RK Kernel for AOSP
+
+on: 
+  schedule:
+    - cron:  '0 22 * * 1,3,5'
+  workflow_dispatch:
+  push:
+     branches: ["rk-aosp"]
+  
+jobs:
+  build-munch-kernel:
+    uses: ./.github/workflows/rk-aosp.yml
+    with:
+      IS_RELEASE: false
+      DEVICE_CODE: munch
+      USE_KERNELSU: true
+  build-alioth-kernel:
+    uses: ./.github/workflows/rk-aosp.yml
+    with:
+      IS_RELEASE: false
+      DEVICE_CODE: alioth
+      USE_KERNELSU: true
+  build-apollo-kernel:
+    uses: ./.github/workflows/rk-aosp.yml
+    with:
+      IS_RELEASE: false
+      DEVICE_CODE: apollo
+      USE_KERNELSU: true

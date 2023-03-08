@@ -1,0 +1,169 @@
+name: Realking Kernel Build
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      IS_RELEASE:
+        required: true
+        default: 'true'
+        type: boolean
+      DEVICE_CODE:
+        required: true
+        default: 'munch'
+      USE_KERNELSU:
+        required: true
+        default: 'true'
+        type: boolean
+      CLANG_ARGS:
+        required: false
+        default: 'NM=llvm-nm LLVM=1 LLVM_IAS=1'
+      USE_CACHE:
+        required: false
+        type: boolean
+        default: true
+  
+jobs:
+  build:
+    name: Build for ${{ github.event.inputs.DEVICE_CODE }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup Configuration
+      run: |
+        if [ ${{ github.event.inputs.IS_RELEASE }} = true ] ; then
+          echo "SOURCE_REPO='WeeAris/Realking_su_xiaomi_sm8250'" >> $GITHUB_ENV
+          echo "BRANCH_NAME=${{ github.event.inputs.DEVICE_CODE }}" >> $GITHUB_ENV
+          if [ ${{ github.event.inputs.DEVICE_CODE }} = alioth ] ; then
+            echo "DEVICE_NAME=Alioth" >> $GITHUB_ENV
+            echo "DEF_CONFIG='vendor/alioth_defconfig'" >> $GITHUB_ENV
+          elif [ ${{ github.event.inputs.DEVICE_CODE }} = munch ] ; then
+            echo "DEVICE_NAME=Munch" >> $GITHUB_ENV
+            echo "DEF_CONFIG='vendor/munch_defconfig'" >> $GITHUB_ENV
+          elif [ ${{ github.event.inputs.DEVICE_CODE }} = apollo ] ; then
+            echo "DEVICE_NAME=Apollo" >> $GITHUB_ENV
+            echo "DEF_CONFIG='vendor/apollo_defconfig'" >> $GITHUB_ENV
+          fi
+        else
+          echo "SOURCE_REPO='Rohail33/Realking_xiaomi_sm8250'" >> $GITHUB_ENV
+          if [ ${{ github.event.inputs.DEVICE_CODE }} = alioth ] ; then
+            echo "BRANCH_NAME=T" >> $GITHUB_ENV
+            echo "DEVICE_NAME=Alioth" >> $GITHUB_ENV
+            echo "DEF_CONFIG='vendor/alioth_defconfig'" >> $GITHUB_ENV
+          elif [ ${{ github.event.inputs.DEVICE_CODE }} = munch ] ; then
+            echo "BRANCH_NAME=${{ github.event.inputs.DEVICE_CODE }}" >> $GITHUB_ENV
+            echo "DEVICE_NAME=Munch" >> $GITHUB_ENV
+            echo "DEF_CONFIG='vendor/munch_defconfig'" >> $GITHUB_ENV
+          elif [ ${{ github.event.inputs.DEVICE_CODE }} = apollo ] ; then
+            echo "BRANCH_NAME=${{ github.event.inputs.DEVICE_CODE }}" >> $GITHUB_ENV
+            echo "DEVICE_NAME=Apollo" >> $GITHUB_ENV
+            echo "DEF_CONFIG='vendor/apollo_defconfig'" >> $GITHUB_ENV
+          fi
+        fi
+        
+
+    - name: Checkout Kernel Source Code
+      uses: actions/checkout@v3
+      with:
+        github-server-url: 'https://github.com'
+        repository: ${{ env.SOURCE_REPO }}
+        ref: ${{ env.BRANCH_NAME }}
+        path: android-kernel
+      
+    - name: Setup Build Environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install git-core git-lfs gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses5 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig python-is-python3 python2 cpio p7zip-full
+    
+    - name: Download Clang Toolchain
+      run: |
+        git lfs clone -b amd64-kernel-arm --depth=1 https://codeberg.org/Mandi-Sa/clang.git clang
+        cd clang
+        chmod -R +x ./
+        CLANG_DIR=`pwd`
+        echo "CLANG_DIR=$CLANG_DIR" >> $GITHUB_ENV
+      
+    - name: Setup KernelSU
+      if: github.event.inputs.USE_KERNELSU == 'true'
+      run: |
+        cd android-kernel
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        wget -q "https://raw.githubusercontent.com/WeeAris/RK-KSU-AOSP-Daily-Build/main/0001-Add-KernelSU-calls-to-the-kernel-source.patch" -O KernelSU.patch
+        git apply ./KernelSU.patch
+    
+    - name: Generate Kernel Configuration
+      run: |
+        cd android-kernel
+        PATH=${{ env.CLANG_DIR }}/bin:$PATH
+        DEVICE_NAME=Munch
+        KERNEL_DEFCONFIG=vendor/munch_defconfig
+        KERNEL_DIR=`pwd`
+        echo "KERNEL_DIR=${KERNEL_DIR}" >> $GITHUB_ENV
+        echo "ZIMAGE_DIR="${KERNEL_DIR}/out/arch/arm64/boot"" >> $GITHUB_ENV
+        ARCH=arm64
+        SUBARCH=arm64
+        KBUILD_COMPILER_STRING="$(clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
+        KBUILD_BUILD_HOST=GitHub-Action
+        KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
+
+        cd $KERNEL_DIR/KernelSU
+        KSU_VERSION=$((10000+200+`git rev-list --count HEAD`))
+        cd $KERNEL_DIR
+
+        make CC=clang O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- NM=llvm-nm LLVM=1 LLVM_IAS=1 ${{ env.DEF_CONFIG }}
+        
+        if ${{ github.event.inputs.USE_KERNELSU }} ; then
+          sed -i "/RealKing/{s/-/-${KSU_VERSION}-/}" out/.config
+          sed -i "/RealKing/{s/RealKing/RK-KSU/}" out/.config
+          KERNEL_NAME=`grep "RK-KSU" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
+        else
+          KERNEL_NAME=`grep "RealKing" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
+        fi
+        if [ ${{ github.event.inputs.IS_RELEASE }} = true ] ; then
+          echo "ZIMAGE_NAME=${KERNEL_NAME}-${{ env.DEVICE_NAME }}-AOSP-Release" >> $GITHUB_ENV
+        else
+          echo "ZIMAGE_NAME=${KERNEL_NAME}-${{ env.DEVICE_NAME }}-AOSP-Snapshot" >> $GITHUB_ENV
+        fi
+        
+        
+        
+    - name: Build Kernel
+      run: |
+        cd android-kernel
+        PATH=${{ env.CLANG_DIR }}/bin:$PATH
+        clang -v
+        SUBARCH=arm64
+        KBUILD_COMPILER_STRING="$(clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
+        KBUILD_BUILD_HOST=GitHub-Action
+        KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)       
+        make -j$(nproc --all) CC=clang O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- NM=llvm-nm LLVM=1 LLVM_IAS=1 
+  
+    - name: ZIP Kernel
+      run: |
+        mkdir image_output
+        cd android-kernel
+        TIME=$(TZ=Asia/Shanghai date "+%Y%m%d%H%M")
+        mkdir -p tmp
+        cp -fp ${{ env.ZIMAGE_DIR }}/Image.gz tmp
+        cp -fp ${{ env.ZIMAGE_DIR }}/dtbo.img tmp
+        cp -fp ${{ env.ZIMAGE_DIR }}/dtb tmp
+        cp -rp ./anykernel/* tmp
+        cd tmp
+        7za a -mx9 tmp.zip *
+        cd ..
+        echo "FINAL_ZINAME="${{ env.ZIMAGE_NAME }}-${TIME}"" >> $GITHUB_ENV
+        FINAL_ZINAME="${{ env.ZIMAGE_NAME }}-${TIME}"
+        mkdir ${{ env.KERNEL_DIR }}/image_output
+        cp -fp tmp/tmp.zip ../image_output/${FINAL_ZINAME}.zip
+        md5sum ../image_output/${FINAL_ZINAME}.zip >../image_output/${FINAL_ZINAME}.zip.md5sum
+        rm -rf out
+        
+    - name: Upload Kernel Image ZIP
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.FINAL_ZINAME }}
+        path: image_output/*
+        
+
+    
+          
+
