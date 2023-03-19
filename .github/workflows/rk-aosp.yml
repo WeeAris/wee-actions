@@ -115,7 +115,7 @@ jobs:
         
         if ${{ inputs.USE_KERNELSU }} ; then
           sed -i "/RealKing/{s/-/-${KSU_VERSION}-/}" out/.config
-          sed -i "/RealKing/{s/~RealKing/RK-KSU/}" out/.config
+          sed -i "/RealKing/{s/~RealKing/-RK-KSU/}" out/.config
           KERNEL_NAME=`grep "RK-KSU" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
         else
           KERNEL_NAME=`grep "RealKing" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
