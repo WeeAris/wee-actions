@@ -115,11 +115,12 @@ jobs:
         
         if ${{ inputs.USE_KERNELSU }} ; then
           sed -i "/RealKing/{s/-/-${KSU_VERSION}-/}" out/.config
-          sed -i "/RealKing/{s/~RealKing/-RK-KSU/}" out/.config
+          sed -i "/RealKing/{s/RealKing/RK-KSU/}" out/.config
           KERNEL_NAME=`grep "RK-KSU" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
         else
           KERNEL_NAME=`grep "RealKing" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
         fi
+        KERNEL_NAME=`echo ${KERNEL_NAME} | sed 's/~//g'`
         if [ ${{ inputs.IS_RELEASE }} = true ] ; then
           echo "ZIMAGE_NAME=${KERNEL_NAME}-${{ env.DEVICE_NAME }}-AOSP-Release" >> $GITHUB_ENV
         else
