@@ -3,7 +3,7 @@ name: Build RK Kernel
 on: 
   workflow_dispatch:
   push:
-     branches: ["rk-aosp"]
+     branches: ["rk"]
      paths:
         - '.github/workflows/build-rk.yml'
         - '.github/workflows/rk-aosp.yml'
