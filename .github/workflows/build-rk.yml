@@ -1,0 +1,50 @@
+name: Build RK Kernel
+
+on: 
+  schedule:
+    - cron:  '0 22 * * 1,3,5'
+  workflow_dispatch:
+  push:
+     branches: ["rk-aosp"]
+     paths:
+        - '.github/workflows/build-rk.yml'
+        - '.github/workflows/rk-aosp.yml'
+        - '.github/workflows/rk-miui.yml'
+  
+jobs:
+  build-munch-aosp-kernel:
+    uses: ./.github/workflows/rk-aosp.yml
+    with:
+      IS_RELEASE: true
+      DEVICE_CODE: 'munch'
+      USE_KERNELSU: true
+  build-alioth-aosp-kernel:
+    uses: ./.github/workflows/rk-aosp.yml
+    with:
+      IS_RELEASE: true
+      DEVICE_CODE: 'alioth'
+      USE_KERNELSU: true
+  build-apollo-aosp-kernel:
+    uses: ./.github/workflows/rk-aosp.yml
+    with:
+      IS_RELEASE: true
+      DEVICE_CODE: 'apollo'
+      USE_KERNELSU: true
+  build-munch-miui-kernel:
+    uses: ./.github/workflows/rk-miui.yml
+    with:
+      IS_RELEASE: true
+      DEVICE_CODE: 'munch'
+      USE_KERNELSU: true
+  build-alioth-miui-kernel:
+    uses: ./.github/workflows/rk-miui.yml
+    with:
+      IS_RELEASE: true
+      DEVICE_CODE: 'alioth'
+      USE_KERNELSU: true
+  build-apollo-miui-kernel:
+    uses: ./.github/workflows/rk-miui.yml
+    with:
+      IS_RELEASE: true
+      DEVICE_CODE: 'apollo'
+      USE_KERNELSU: true
