@@ -124,9 +124,9 @@ jobs:
         fi
         KERNEL_NAME=`echo ${KERNEL_NAME} | sed 's/~//g'`
         if [ ${{ inputs.IS_RELEASE }} = true ] ; then
-          echo "ZIMAGE_NAME=${KERNEL_NAME}-${{ env.DEVICE_NAME }}-AOSP-Release" >> $GITHUB_ENV
+          echo "ZIMAGE_NAME=${KERNEL_NAME}-${{ env.DEVICE_NAME }}-MIUI-Release" >> $GITHUB_ENV
         else
-          echo "ZIMAGE_NAME=${KERNEL_NAME}-${{ env.DEVICE_NAME }}-AOSP-Snapshot" >> $GITHUB_ENV
+          echo "ZIMAGE_NAME=${KERNEL_NAME}-${{ env.DEVICE_NAME }}-MIUI-Snapshot" >> $GITHUB_ENV
         fi
         
         sed -i 's/# CONFIG_SECCOMP is not set/CONFIG_SECCOMP=y/' ./out/.config
