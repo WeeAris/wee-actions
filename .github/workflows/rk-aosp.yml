@@ -88,7 +88,7 @@ jobs:
       if: ${{ inputs.USE_KERNELSU }} == true
       run: |
         cd android-kernel
-        git clone https://github.com/WeeAris/KernelSU.git
+        #git clone https://github.com/WeeAris/KernelSU.git
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
         wget -q "https://raw.githubusercontent.com/WeeAris/RK-KSU-AOSP-Daily-Build/main/0001-Add-KernelSU-calls-to-the-kernel-source.patch" -O KernelSU.patch
         git apply ./KernelSU.patch
