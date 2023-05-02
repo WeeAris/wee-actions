@@ -1,4 +1,4 @@
-name: Realking MIUI Kernel Build
+name: RK MIUI Kernel Build
 
 on:
   workflow_dispatch:
@@ -36,21 +36,21 @@ jobs:
           echo "SOURCE_REPO=WeeAris/Realking_imm_kernel_sm8250" >> $GITHUB_ENV
           
           if [ ${{ inputs.DEVICE_CODE }} = alioth ] ; then
-            echo "BRANCH_NAME=alioth-imm" >> $GITHUB_ENV
+            echo "BRANCH_NAME=rebase3" >> $GITHUB_ENV
             echo "DEVICE_NAME=Alioth" >> $GITHUB_ENV
             echo "DEF_CONFIG=alioth_defconfig" >> $GITHUB_ENV
           elif [ ${{ inputs.DEVICE_CODE }} = munch ] ; then
-            echo "BRANCH_NAME=munch-imm" >> $GITHUB_ENV
+            echo "BRANCH_NAME=rebase3" >> $GITHUB_ENV
             echo "DEVICE_NAME=Munch" >> $GITHUB_ENV
             echo "DEF_CONFIG=munch_defconfig" >> $GITHUB_ENV
           elif [ ${{ inputs.DEVICE_CODE }} = apollo ] ; then
-            echo "BRANCH_NAME=apollo-imm" >> $GITHUB_ENV
+            echo "BRANCH_NAME=rebase3" >> $GITHUB_ENV
             echo "DEVICE_NAME=Apollo" >> $GITHUB_ENV
             echo "DEF_CONFIG=apollo_defconfig" >> $GITHUB_ENV
           fi
         else
           echo "SOURCE_REPO=Rohail33/Realking_kernel_sm8250" >> $GITHUB_ENV
-          echo "BRANCH_NAME=${{ inputs.DEVICE_CODE }}" >> $GITHUB_ENV
+          echo "BRANCH_NAME=rebase3" >> $GITHUB_ENV
           if [ ${{ inputs.DEVICE_CODE }} = alioth ] ; then
             echo "DEVICE_NAME=Alioth" >> $GITHUB_ENV
             echo "DEF_CONFIG=alioth_defconfig" >> $GITHUB_ENV
@@ -89,17 +89,16 @@ jobs:
       if: ${{ inputs.USE_KERNELSU }} == true
       run: |
         cd android-kernel
-        #git clone https://github.com/WeeAris/KernelSU.git
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        wget -q "https://raw.githubusercontent.com/WeeAris/RK-KSU-AOSP-Daily-Build/main/0001-Add-KernelSU-calls-to-the-kernel-source.patch" -O KernelSU.patch
+        wget -q "https://raw.githubusercontent.com/WeeAris/RK-KSU-AOSP-Daily-Build/main/0001-readd-ksu-support-patch.patch" -O KernelSU.patch
         git apply ./KernelSU.patch
     
     - name: Generate Kernel Configuration
       run: |
         cd android-kernel
         PATH=${{ env.CLANG_DIR }}/bin:$PATH
-        DEVICE_NAME=Munch
-        KERNEL_DEFCONFIG=vendor/munch_defconfig
+        DEVICE_NAME=${{ env.DEVICE_NAME }}
+        KERNEL_DEFCONFIG=${{ env.DEF_CONFIG }}
         KERNEL_DIR=`pwd`
         echo "KERNEL_DIR=${KERNEL_DIR}" >> $GITHUB_ENV
         echo "ZIMAGE_DIR="${KERNEL_DIR}/out/arch/arm64/boot"" >> $GITHUB_ENV
@@ -116,8 +115,8 @@ jobs:
         make ${{ env.DEF_CONFIG }} O=out CC=clang ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- NM=llvm-nm OBJDUMP=llvm-objdump STRIP=llvm-strip
         
         if ${{ inputs.USE_KERNELSU }} ; then
-          sed -i "/RealKing/{s/-/-${KSU_VERSION}-/}" out/.config
-          sed -i "/RealKing/{s/RealKing/RK-KSU/}" out/.config
+          sed -i "/Realking/{s/-/-${KSU_VERSION}-/}" out/.config && sed -i "/RealKing/{s/-/-${KSU_VERSION}-/}" out/.config
+          sed -i "/Realking/{s/Realking/RK-KSU/}" out/.config && sed -i "/RealKing/{s/Realking/RK-KSU/}" out/.config
           KERNEL_NAME=`grep "RK-KSU" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
         else
           KERNEL_NAME=`grep "RealKing" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
@@ -152,7 +151,15 @@ jobs:
         cp -fp ${{ env.ZIMAGE_DIR }}/Image.gz tmp
         cp -fp ${{ env.ZIMAGE_DIR }}/dtbo.img tmp
         cp -fp ${{ env.ZIMAGE_DIR }}/dtb tmp
-        cp -rp ./anykernel/* tmp
+        
+        if [ ${{ inputs.DEVICE_CODE }} = alioth ] ; then
+            cp -rp ./anykernel/* tmp
+          elif [ ${{ inputs.DEVICE_CODE }} = munch ] ; then
+            cp -rp ./anykernel3/* tmp
+          elif [ ${{ inputs.DEVICE_CODE }} = apollo ] ; then
+            cp -rp ./anykernel2/* tmp
+          fi
+          
         cd tmp
         7za a -mx9 tmp.zip *
         cd ..
