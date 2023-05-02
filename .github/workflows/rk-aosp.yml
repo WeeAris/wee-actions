@@ -115,8 +115,12 @@ jobs:
         make ${{ env.DEF_CONFIG }} O=out CC=clang ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- NM=llvm-nm OBJDUMP=llvm-objdump STRIP=llvm-strip
         
         if ${{ inputs.USE_KERNELSU }} ; then
-          sed -i "/Realking/{s/-/-${KSU_VERSION}-/}" out/.config && sed -i "/RealKing/{s/-/-${KSU_VERSION}-/}" out/.config
-          sed -i "/Realking/{s/Realking/RK-KSU/}" out/.config && sed -i "/RealKing/{s/Realking/RK-KSU/}" out/.config
+          echo "CONFIG_LOCALVERSION=" && grep "CONFIG_LOCALVERSION"
+          sed -i "/Realking/{s/-/-${KSU_VERSION}-/}" out/.config
+          sed -i "/RealKing/{s/-/-${KSU_VERSION}-/}" out/.config
+          sed -i "/Realking/{s/Realking/RK-KSU/}" out/.config 
+          sed -i "/RealKing/{s/RealKing/RK-KSU/}" out/.config
+          echo "CONFIG_LOCALVERSION=" && grep "CONFIG_LOCALVERSION"
           KERNEL_NAME=`grep "RK-KSU" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
         else
           KERNEL_NAME=`grep "RealKing" out/.config | sed 's|//|-|' | awk -F\" '{print $2}'`
