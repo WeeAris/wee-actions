@@ -36,21 +36,21 @@ jobs:
           echo "SOURCE_REPO=WeeAris/Realking_imm_kernel_sm8250" >> $GITHUB_ENV
           
           if [ ${{ inputs.DEVICE_CODE }} = alioth ] ; then
-            echo "BRANCH_NAME=aosp2" >> $GITHUB_ENV
+            echo "BRANCH_NAME=aosp" >> $GITHUB_ENV
             echo "DEVICE_NAME=Alioth" >> $GITHUB_ENV
             echo "DEF_CONFIG=alioth_defconfig" >> $GITHUB_ENV
           elif [ ${{ inputs.DEVICE_CODE }} = munch ] ; then
-            echo "BRANCH_NAME=aosp2" >> $GITHUB_ENV
+            echo "BRANCH_NAME=aosp" >> $GITHUB_ENV
             echo "DEVICE_NAME=Munch" >> $GITHUB_ENV
             echo "DEF_CONFIG=munch_defconfig" >> $GITHUB_ENV
           elif [ ${{ inputs.DEVICE_CODE }} = apollo ] ; then
-            echo "BRANCH_NAME=aosp2" >> $GITHUB_ENV
+            echo "BRANCH_NAME=aosp" >> $GITHUB_ENV
             echo "DEVICE_NAME=Apollo" >> $GITHUB_ENV
             echo "DEF_CONFIG=apollo_defconfig" >> $GITHUB_ENV
           fi
         else
           echo "SOURCE_REPO=Rohail33/Realking_kernel_sm8250" >> $GITHUB_ENV
-          echo "BRANCH_NAME=aosp2" >> $GITHUB_ENV
+          echo "BRANCH_NAME=aosp" >> $GITHUB_ENV
           if [ ${{ inputs.DEVICE_CODE }} = alioth ] ; then
             echo "DEVICE_NAME=Alioth" >> $GITHUB_ENV
             echo "DEF_CONFIG=alioth_defconfig" >> $GITHUB_ENV
