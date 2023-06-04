@@ -89,10 +89,10 @@ jobs:
       if: ${{ inputs.USE_KERNELSU }} == true
       run: |
         cd android-kernel
+        rm -rf KernelSU
+        rm -rf drivers/kernelsu
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        wget -q "https://raw.githubusercontent.com/WeeAris/RK-KSU-AOSP-Daily-Build/main/0001-readd-ksu-support-patch.patch" -O KernelSU.patch
-        git apply ./KernelSU.patch
-    
+
     - name: Generate Kernel Configuration
       run: |
         cd android-kernel
